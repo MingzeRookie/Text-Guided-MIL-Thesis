@@ -15,7 +15,8 @@ import time
 import wandb 
 try:
     from src.datasets.wsi_multimodal_spatial_dataset import WsiMultimodalSpatialDataset
-    from src.models.multimodal_text_guided_mil import MultimodalTextGuidedMIL
+    # from src.models.multimodal_text_guided_mil import MultimodalTextGuidedMIL
+    from src.models.text_graph_mil import TextGuidedGCN
     from src.utils.data_utils import multimodal_spatial_collate_fn
     print("成功从 src.datasets, src.models, src.utils 导入自定义模块。")
 except ImportError as e:
@@ -99,12 +100,17 @@ def train_one_epoch(model, loader, criterion, optimizer, device, epoch_num, num_
         #     patch_mask_batch=patch_mask_b
         # )
         # 修改为:
+        # logits = model(
+        #     image_patch_features_batch=image_patch_features_b,
+        #     patch_grid_indices_batch=patch_grid_indices_b,
+        #     grid_shapes_batch=grid_shapes_b,
+        #     # text_feat_batch=text_feat_b, # 如果模型forward签名已修改为可选，则可省略
+        #     patch_mask_batch=patch_mask_b
+        # )
         logits = model(
             image_patch_features_batch=image_patch_features_b,
-            patch_grid_indices_batch=patch_grid_indices_b,
-            grid_shapes_batch=grid_shapes_b,
-            # text_feat_batch=text_feat_b, # 如果模型forward签名已修改为可选，则可省略
-            patch_mask_batch=patch_mask_b
+            original_patch_coordinates_batch=original_patch_coordinates_b, # 关键：传入坐标
+            text_feat_batch=text_feat_b
         )
 
         
@@ -191,12 +197,18 @@ def evaluate(model, loader, criterion, device, epoch_num, num_classes, log_to_wa
             grid_shapes_b = grid_shapes_b.to(device)
             patch_mask_b = patch_mask_b.to(device)
 
+            # logits = model(
+            #     image_patch_features_batch=image_patch_features_b,
+            #     patch_grid_indices_batch=patch_grid_indices_b,
+            #     text_feat_batch=text_feat_b,
+            #     grid_shapes_batch=grid_shapes_b,
+            #     patch_mask_batch=patch_mask_b
+            # )
+            # 同样替换为：
             logits = model(
                 image_patch_features_batch=image_patch_features_b,
-                patch_grid_indices_batch=patch_grid_indices_b,
-                text_feat_batch=text_feat_b,
-                grid_shapes_batch=grid_shapes_b,
-                patch_mask_batch=patch_mask_b
+                original_patch_coordinates_batch=original_patch_coordinates_b,
+                text_feat_batch=text_feat_b
             )
             if torch.isnan(logits).any() or torch.isinf(logits).any():
                 logger.error(f"评估 Epoch {epoch_num+1}, Batch {batch_idx}: Logits 包含 NaN 或 Inf！")
@@ -323,7 +335,8 @@ def main(cfg: DictConfig):
         "num_classes": num_classes_from_config,
         "model_params": cfg.model_params 
     })
-    model = MultimodalTextGuidedMIL(config=model_config_for_init).to(device)
+    # model = MultimodalTextGuidedMIL(config=model_config_for_init).to(device)
+    model = TextGuidedGCN(config=model_config_for_init).to(device)
     logger.info("模型实例化完成。")
     
     # if cfg.experiment_params.get("wandb_watch_model", False): # 暂时禁用 watch
