@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+wandb/
+outputs/
+logs/
+study_results/
+contrast_study/
+
+# 忽略巨大的数据文件
+*.pt
+*.pth
+*.h5
+*.svs
+*.pkl
+
+

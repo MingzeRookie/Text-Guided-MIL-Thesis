@@ -1,0 +1,31 @@
+# Data paths
+data_root: "/remote-home/share/lisj/Workspace/SOTA_NAS/datasets/core/"
+patch_feature_dir: ${data_root}/MUSK-feature/ # Assuming your case.pt files are here
+text_feature_path: ${data_root}/MUSK-feature/MUSK-text-feature/averaged_text_feature.pt
+# list_of_case_ids_train: ... (path to a file listing training case IDs)
+# labels_dict_path: ... (path to a file mapping case_ids to labels)
+
+# Dataset params
+window_size: 3
+stride: 3
+top_k_percent: 0.5
+feature_dim: 1024 # From MUSK features
+
+# Model params
+# WSIImageEncoder
+self_attn_heads: 8
+mil_hidden_dim: 256
+mil_output_dim: 1024 # Output of MIL, should match feature_dim if no change
+# MultimodalFusion
+cross_attn_heads: 8
+# ... other fusion params
+# FinalClassifier
+num_classes: 2 # Example
+
+# Training params
+device_id: 1 # Preferred CUDA device
+seed: 42
+batch_size: 1 # Usually 1 for WSI due to variable number of patches/windows
+learning_rate: 0.0001
+epochs: 50
+# ...

@@ -1,0 +1,71 @@
+# BMW/configs/config_bmw_multimodal_spatial_baseline.yaml
+defaults:
+  - _self_ # 允许在此文件中定义默认值
+
+data:
+  train_manifest_csv_path: "/remote-home/share/lisj/Workspace/SOTA_NAS/BMW/datasets/train_inflammation_labels.csv" 
+  val_manifest_csv_path: "/remote-home/share/lisj/Workspace/SOTA_NAS/BMW/datasets/val_inflammation_labels.csv"
+  image_feature_dir: "/remote-home/share/lisj/Workspace/SOTA_NAS/datasets/core/MUSK-feature"
+  text_feature_path: "/remote-home/share/lisj/Workspace/SOTA_NAS/datasets/core/MUSK-feature/MUSK-text-feature/averaged_text_feature.pt"
+  patch_size_pixels: [224, 224]
+  label_column_name: "inflammation_label"  # 新CSV中的标签列名
+  wsi_id_column_name: "slide_id"         # 新CSV中的WSI ID列名
+
+model_params:
+  name: "MultimodalTextGuidedMIL"
+  patch_feature_dim: 1024
+  text_feature_dim: 1024
+  num_classes: 4 # 或您的类别数
+  similarity_projection_dim: 256
+  window_params:
+    patch_rows: 3
+    patch_cols: 3
+    stride_rows: 3
+    stride_cols: 3
+    num_selected_windows: 5
+    pre_similarity_window_agg_type: 'mean' # 'mean', 'max', or 'attention_light'
+    light_agg_D: 128
+    light_agg_dropout: 0.3
+  self_attn_heads: 4
+  self_attn_dropout: 0.1
+  window_mil_output_dim: 512
+  window_mil_D: 128           # 对应 AttentionMIL 的 hidden_dim
+  window_mil_dropout: 0.3    # 对应 AttentionMIL 的 dropout_rate
+  final_image_feature_dim: 512
+  inter_window_mil_D: 128     # 对应 AttentionMIL 的 hidden_dim
+  inter_window_mil_dropout: 0.4 # 对应 AttentionMIL 的 dropout_rate
+  cross_attn_heads: 4
+  cross_attn_dropout: 0.1
+  classifier_hidden_dim: 256
+  classifier_dropout: 0.3
+  ablation_image_only: False  # Set to True for image-only experiment
+  ablation_no_window: True   # Set to True for no-window experiment
+  direct_cross_attention_embed_dim: 1024 # Example, can be same as patch_feature_dim or different
+  direct_final_mil_output_dim: 512    # Example
+  direct_final_mil_hidden_dim: 128    # Example
+  direct_final_mil_dropout: 0.25      # Example
+
+train_params:
+  optimizer: "AdamW"
+  learning_rate: 0.00002
+  weight_decay: 0.0001
+  batch_size: 8 # 根据您的 GPU 显存调整
+  num_epochs: 50
+  warmup_epochs: 5 # 如果使用 CosineAnnealingLR
+  scheduler: "CosineAnnealingLR" # "CosineAnnealingLR", "ReduceLROnPlateau", or "None"
+  loss_function: "CrossEntropyLoss"
+
+experiment_params:
+  experiment_name: "bmw_ablation_image_only_inflammation_v1" # 或您的实验名
+  run_name: null # 如果为 null，脚本会生成一个基于时间的名称，或者您可以指定一个
+  wandb_project: "BMW-Multimodal-Project" # 您可以保持这个项目名，或修改为您希望的
+  wandb_entity: "chengmz" # <--- 修改这里为您的 wandb 用户名
+  wandb_watch_model: True # (可选) 是否使用 wandb.watch()
+  wandb_watch_log_level: "all" # (可选) wandb.watch() 的日志级别
+  wandb_watch_log_freq: 100    # (可选) wandb.watch() 的记录频率
+  wandb_save_best_model: True # (可选) 是否将最佳模型保存到wandb
+  log_dir: "./logs" 
+  checkpoint_dir: "./checkpoints" 
+  num_workers: 4
+  seed: 42
+  gpu_id: 0
