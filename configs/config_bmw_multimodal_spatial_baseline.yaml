@@ -29,6 +29,7 @@ model_params:
   self_attn_heads: 4
   self_attn_dropout: 0.1
   window_mil_output_dim: 512
+  k_sample: 1024
   window_mil_D: 128           # 对应 AttentionMIL 的 hidden_dim
   window_mil_dropout: 0.3    # 对应 AttentionMIL 的 dropout_rate
   final_image_feature_dim: 512
